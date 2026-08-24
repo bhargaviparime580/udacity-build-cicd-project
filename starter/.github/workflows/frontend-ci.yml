@@ -38,3 +38,13 @@ test:
   - name: Run tests
     working-directory: frontend
     run: npm test -- --watchAll=false
+
+build:
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        working-directory: starter
+        run: docker build -t movie-picture-frontend .    
