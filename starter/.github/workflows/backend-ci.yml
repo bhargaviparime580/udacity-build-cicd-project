@@ -23,7 +23,34 @@ on:
  - name: Run lint
    working-directory: backend
    run: pipenv run lint 
+   
 
- - name: Run tests
-   working-directory: backend
-   run: pipenv run test   
+ test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        working-directory: backend
+        run: |
+          pip install pipenv
+          pipenv install --dev
+
+      - name: Run tests
+        working-directory: backend
+        run: pipenv run pytest
+
+  build:
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        working-directory: starter
+        run: docker build -t movie-picture-backend .
+        
