@@ -17,11 +17,11 @@ jobs:
           node-version: "20"
          
       - name: Install dependencies
-        working-directory: frontend
+        working-directory: starter/frontend
         run: npm ci
 
       - name: Run lint
-        working-directory: frontend
+        working-directory: starter/frontend
         run: npm run lint
 
   test:
@@ -34,11 +34,11 @@ jobs:
           node-version: "20"
          
       - name: Install dependencies
-        working-directory: frontend
+        working-directory: starter/frontend
         run: npm ci
 
       - name: Run tests
-        working-directory: frontend
+        working-directory: starter/frontend
         run: npm test -- --watchAll=false
 
   build:
