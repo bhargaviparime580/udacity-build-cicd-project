@@ -9,13 +9,14 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-         
+
       - name: Install dependencies
         working-directory: starter/frontend
         run: npm ci
@@ -24,15 +25,17 @@ jobs:
         working-directory: starter/frontend
         run: npm run lint
 
+
   test:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-         
+
       - name: Install dependencies
         working-directory: starter/frontend
         run: npm ci
@@ -40,6 +43,7 @@ jobs:
       - name: Run tests
         working-directory: starter/frontend
         run: npm test -- --watchAll=false
+
 
   build:
     needs: [lint, test]
@@ -65,24 +69,22 @@ jobs:
           ECR_REPOSITORY: frontend
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build --build-arg REACT_APP_MOVIE_API_URL=${{ secrets.REACT_APP_MOVIE_API_URL }} -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./frontend
+          docker build \
+            --build-arg REACT_APP_MOVIE_API_URL=${{ secrets.REACT_APP_MOVIE_API_URL }} \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            starter/frontend
+
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
       - name: Configure kubectl
-        uses: aws-actions/eks-kubectl-run@v1
-        env:
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}
-        with:
-          cluster: ${{ secrets.EKS_CLUSTER_NAME }}
-          command: apply
-          args: -k frontend/k8s
-
-      - name: Update kubeconfig
         run: |
-          aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name ${{ secrets.EKS_CLUSTER_NAME }}
+          aws eks update-kubeconfig \
+            --region ${{ secrets.AWS_REGION }} \
+            --name ${{ secrets.EKS_CLUSTER_NAME }}
 
       - name: Update Kubernetes image
-        working-directory: frontend/k8s
         run: |
-          kustomize edit set image frontend=${{ steps.login-ecr.outputs.registry }}/frontend:${{ github.sha }}
+          kubectl set image deployment/frontend \
+            frontend=${{ steps.login-ecr.outputs.registry }}/frontend:${{ github.sha }}
+
+          kubectl rollout status deployment/frontend
